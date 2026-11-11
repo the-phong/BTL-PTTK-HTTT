@@ -28,13 +28,50 @@ const fs = require("fs"),
       "utf8",
     );
     await c.query(sql);
-    await c.query(`INSERT IGNORE INTO tblXeOTo(MaXeHienThi,TenXe,BienSo,LoaiXe,SoCho,HangXe,NamSanXuat,MoTa,DonGiaGio) VALUES
-('XE0015','Toyota Fortuner 2.4AT','30H-123.45','SUV',7,'Toyota',2023,'SUV mạnh mẽ, rộng rãi cho những chuyến đi xa. 7 chỗ ngồi thoải mái.',55000),
-('XE0027','Ford Everest Titanium','30K-678.90','SUV',7,'Ford',2024,'SUV cao cấp với không gian rộng và nhiều tiện nghi.',70000),
-('XE0034','Hyundai Santa Fe','30L-246.80','SUV',7,'Hyundai',2023,'Thiết kế hiện đại, phù hợp cho gia đình và nhóm bạn.',65000),
-('XE0008','Toyota Vios G','30A-888.88','Sedan',5,'Toyota',2024,'Sedan tiết kiệm, linh hoạt di chuyển nội thành.',35000),
-('XE0011','Honda City RS','30B-555.55','Sedan',5,'Honda',2023,'Sedan thể thao, tiện nghi và tiết kiệm nhiên liệu.',40000),
-('XE0042','Mitsubishi Xpander','30C-222.22','MPV',7,'Mitsubishi',2024,'MPV rộng rãi cho cả gia đình.',50000)`);
+    const [detailIndex] = await c.query(
+      "SELECT INDEX_NAME FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'tblChiTietPhieuDat' AND INDEX_NAME = 'uq_chi_tiet_phieu_xe' LIMIT 1",
+      [process.env.DB_NAME],
+    );
+    if (detailIndex.length === 0) {
+      await c.query(
+        "ALTER TABLE tblChiTietPhieuDat ADD UNIQUE KEY uq_chi_tiet_phieu_xe(MaPhieu, MaXe)",
+      );
+    }
+    const [roleColumns] = await c.query(
+      "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'tblThanhVien' AND COLUMN_NAME = 'VaiTro'",
+      [process.env.DB_NAME],
+    );
+    if (roleColumns.length === 0) {
+      await c.query(
+        "ALTER TABLE tblThanhVien ADD COLUMN VaiTro ENUM('KHACH_HANG','NHAN_VIEN_TIEP_NHAN','NHAN_VIEN_KY_THUAT','QUAN_LY','QUAN_TRI') NOT NULL DEFAULT 'KHACH_HANG' AFTER MatKhau",
+      );
+    }
+    const [columns] = await c.query(
+      "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'tblXeOTo' AND COLUMN_NAME IN ('HopSo', 'NhienLieu')",
+      [process.env.DB_NAME],
+    );
+    const present = new Set(columns.map((column) => column.COLUMN_NAME));
+    if (!present.has("HopSo"))
+      await c.query(
+        "ALTER TABLE tblXeOTo ADD COLUMN HopSo VARCHAR(30) NULL AFTER NamSanXuat",
+      );
+    if (!present.has("NhienLieu"))
+      await c.query(
+        "ALTER TABLE tblXeOTo ADD COLUMN NhienLieu VARCHAR(30) NULL AFTER HopSo",
+      );
+    await c.query(`INSERT IGNORE INTO tblXeOTo(MaXeHienThi,TenXe,BienSo,LoaiXe,SoCho,HangXe,NamSanXuat,HopSo,NhienLieu,MoTa,DonGiaGio) VALUES
+('XE0015','Toyota Fortuner 2.4AT','30H-123.45','SUV',7,'Toyota',2024,'Tự động','Dầu','SUV mạnh mẽ, rộng rãi cho những chuyến đi xa. 7 chỗ ngồi thoải mái.',55000),
+('XE0027','Ford Everest Titanium','30K-678.90','SUV',7,'Ford',2024,'Tự động','Dầu','SUV cao cấp với không gian rộng và nhiều tiện nghi.',70000),
+('XE0034','Hyundai Santa Fe','30L-246.80','SUV',7,'Hyundai',2023,'Tự động','Xăng','Thiết kế hiện đại, phù hợp cho gia đình và nhóm bạn.',65000),
+('XE0008','Toyota Vios G','30A-888.88','Sedan',5,'Toyota',2024,'Tự động','Xăng','Sedan tiết kiệm, linh hoạt di chuyển nội thành.',35000),
+('XE0011','Honda City RS','30B-555.55','Sedan',5,'Honda',2023,'Tự động','Xăng','Sedan thể thao, tiện nghi và tiết kiệm nhiên liệu.',40000),
+('XE0042','Mitsubishi Xpander','30C-222.22','MPV',7,'Mitsubishi',2024,'Tự động','Xăng','MPV rộng rãi cho cả gia đình.',50000)`);
+    await c.query(
+      "UPDATE tblXeOTo SET HopSo = COALESCE(HopSo, 'Tự động'), NhienLieu = COALESCE(NhienLieu, 'Xăng') WHERE MaXeHienThi IN ('XE0015','XE0027','XE0034','XE0008','XE0011','XE0042')",
+    );
+    await c.query(
+      "UPDATE tblXeOTo SET NhienLieu = 'Dầu' WHERE MaXeHienThi IN ('XE0015','XE0027')",
+    );
     console.log("Đã tạo cơ sở dữ liệu và dữ liệu xe mẫu.");
   } catch (e) {
     console.error("Không thể khởi tạo DB:", e.message);

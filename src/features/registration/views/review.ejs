@@ -1,0 +1,28 @@
+<%- include('../../../views/partials/header', { title }) %>
+<section class="error-page">
+  <span class="eyebrow">BƯỚC 02 · KIỂM TRA THÔNG TIN</span>
+  <h1>Xác nhận đăng ký</h1>
+  <p>Vui lòng kiểm tra thông tin trước khi tạo tài khoản.</p>
+</section>
+<% if (errors.length) { %>
+<div class="notice error"><%= errors.join(' ') %></div>
+<% } %>
+<div class="table-wrap">
+  <table>
+    <tbody>
+      <tr><th>Họ và tên</th><td><%= profile.name %></td></tr>
+      <tr><th>Ngày sinh</th><td><%= profile.birth %></td></tr>
+      <tr><th>Số điện thoại</th><td><%= profile.phone %></td></tr>
+      <tr><th>Email</th><td><%= profile.email %></td></tr>
+      <tr><th>Địa chỉ</th><td><%= profile.address %></td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="hero-actions">
+  <a class="button outline" href="/dang-ky/sua">← Quay lại chỉnh sửa</a>
+  <form method="post" action="/dang-ky/xac-nhan">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+    <button class="button primary">Xác nhận đăng ký →</button>
+  </form>
+</div>
+<%- include('../../../views/partials/footer') %>

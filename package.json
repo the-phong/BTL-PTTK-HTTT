@@ -8,6 +8,7 @@
     "start": "node src/app.js",
     "dev": "node --watch src/app.js",
     "db:init": "node scripts/init-db.js",
+    "db:seed": "node scripts/seed-demo.js",
     "test": "node --test"
   },
   "dependencies": {
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "prettier": "^3.9.10",
-    "prettier-plugin-ejs": "^1.0.3"
+    "prettier-plugin-ejs": "^1.0.3",
+    "supertest": "^7.3.2"
   }
 }

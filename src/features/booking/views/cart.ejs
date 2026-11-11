@@ -7,6 +7,9 @@
   </div>
   <span class="step-pill">02 — XÁC NHẬN</span>
 </div>
+<div class="notice">
+  Khách hàng: <strong><%= user.name %></strong> · <%= user.customerCode %> · <%= user.email %>
+</div>
 <% if(error){ %>
 <div class="notice error"><%= error %></div>
 <% } %>

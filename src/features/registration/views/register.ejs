@@ -10,6 +10,9 @@
     <span class="eyebrow">BƯỚC 01 · THÔNG TIN CÁ NHÂN</span>
     <h2>Tạo tài khoản</h2>
     <p class="muted">Điền thông tin để bắt đầu.</p>
+    <% if (form.hash) { %>
+    <p class="muted">Sau khi chỉnh sửa, vui lòng nhập lại mật khẩu để xác nhận thông tin.</p>
+    <% } %>
     <% if (errors && errors.length > 0) { %>
     <div class="notice error">
       <ul>
@@ -27,7 +30,7 @@
             name="name"
             required
             minlength="2"
-            value="<%= form.name||'' %>"
+            maxlength="120" value="<%= form.name||'' %>"
             placeholder="Nguyễn Thế Phong" /></label
         ><label
           >Ngày sinh<input
@@ -39,27 +42,27 @@
           >Số điện thoại<input
             name="phone"
             required
-            value="<%= form.phone||'' %>"
+            maxlength="20" value="<%= form.phone||'' %>"
             placeholder="09xx xxx xxx" /></label
         ><label
           >Email<input
             type="email"
             name="email"
             required
-            value="<%= form.email||'' %>"
+            maxlength="190" value="<%= form.email||'' %>"
             placeholder="ban@email.com" /></label
         ><label class="span-two"
           >Địa chỉ<input
             name="address"
             required
-            value="<%= form.address||'' %>"
+            maxlength="255" value="<%= form.address||'' %>"
             placeholder="Số nhà, đường, quận/huyện, tỉnh/thành" /></label
         ><label
           >Mật khẩu<input
             type="password"
             name="password"
             required
-            minlength="8"
+            minlength="8" maxlength="72"
             autocomplete="new-password"
             placeholder="Tối thiểu 8 ký tự" /></label
         ><label
@@ -67,12 +70,12 @@
             type="password"
             name="confirm"
             required
-            minlength="8"
+            minlength="8" maxlength="72"
             autocomplete="new-password"
             placeholder="Nhập lại mật khẩu"
         /></label>
       </div>
-      <button class="button primary full">Tạo tài khoản <span>→</span></button>
+      <button class="button primary full">Tiếp tục <span>→</span></button>
     </form>
     <p class="form-bottom">
       Đã là thành viên? <a href="/dang-nhap">Đăng nhập</a>

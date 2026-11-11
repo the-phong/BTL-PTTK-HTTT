@@ -10,6 +10,14 @@
 4. `npm run db:init` để tạo schema và dữ liệu xe mẫu.
 5. `npm start` rồi mở `http://localhost:3000`.
 
+## Dữ liệu demo mở rộng
+
+Điền `DEMO_SEED_PASSWORD` (tối thiểu 8 ký tự) vào `.env`, chạy `npm run db:init` rồi `npm run db:seed`. Script tạo thêm 300 xe mã `DEMO-XE-0001` đến `DEMO-XE-0300`, 6 khách hàng và 10 thành viên nhân viên. Có 72 phiếu đặt mẫu: 24 phiếu đã hoàn tất, 12 phiếu đang thuê và 36 phiếu sắp tới. Mỗi phiếu có 1–3 xe; lịch của các xe mẫu không giao nhau. Chạy lại script không tạo trùng dữ liệu. Sáu xe mẫu cũ do `db:init` tạo vẫn được giữ nguyên, nên tổng số xe thường là 306.
+
+Email khách hàng: `demo.kh01@example.test` đến `demo.kh06@example.test`. Email nhân viên: `demo.nv01@example.test` đến `demo.nv10@example.test`. Mật khẩu là giá trị `DEMO_SEED_PASSWORD` ở lần chạy seed đầu tiên. Tài khoản nhân viên có vai trò trong dữ liệu; giao diện hiện chỉ hỗ trợ đăng nhập khách hàng.
+
+Trong môi trường WSL hiện tại, MySQL chạy trên Windows và `localhost:3306` từ WSL không kết nối được. Chạy lệnh Node bằng Windows Terminal tại thư mục dự án, hoặc dùng `node.exe scripts/init-db.js` và `node.exe scripts/seed-demo.js` từ WSL. Khi chạy ứng dụng trong WSL, cần cấu hình một địa chỉ MySQL mà WSL truy cập được; chạy ứng dụng bằng Node trên Windows sẽ dùng được `DB_HOST=localhost` hiện tại.
+
 Không có tài khoản mẫu với mật khẩu mặc định; tạo tài khoản qua `/dang-ky`.
 
 `SESSION_SECRET` phải dài ít nhất 32 ký tự. `DB_HOST`, `DB_USER` và `DB_NAME` là các biến bắt buộc. `DB_NAME` chỉ dùng chữ, số và dấu gạch dưới.

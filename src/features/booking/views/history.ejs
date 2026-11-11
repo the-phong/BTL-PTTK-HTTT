@@ -29,7 +29,7 @@
         <td>
           <strong><%= b.MaPhieuHienThi %></strong>
         </td>
-        <td><%= new Date(b.ThoiGianDat).toLocaleString('vi-VN') %></td>
+        <td><%= new Date(b.ThoiGianDatUnix * 1000).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }) %></td>
         <td><span class="status"><%= b.TrangThai %></span></td>
         <td>
           <%= Number(b.TongTien).toLocaleString('vi-VN') %>

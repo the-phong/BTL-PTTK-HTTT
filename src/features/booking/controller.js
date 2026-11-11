@@ -97,13 +97,13 @@ exports.select = async (req, res) => {
       "Hãy tìm kiếm lại với khoảng thời gian hợp lệ.",
       "Xe không còn khả dụng trong khoảng thời gian này.",
     ];
-    if (!safeMessages.includes(e.message)) console.error("Car selection failed:", e);
+    if (!safeMessages.includes(e.message))
+      console.error("Car selection failed:", e);
     const message = safeMessages.includes(e.message)
       ? e.message
       : "Không thể chọn xe lúc này. Vui lòng thử lại.";
-    return res.redirect(
-      "/dat-xe/gio-hang?error=" + encodeURIComponent(message),
-    );
+    req.session.bookingError = message;
+    return res.redirect("/dat-xe/gio-hang");
   }
 };
 
@@ -119,6 +119,8 @@ exports.cart = async (req, res, next) => {
     req.session.selectedCars = result.items;
 
     const messages = [];
+    const error = req.session.bookingError || null;
+    delete req.session.bookingError;
     if (req.session.bookingNotice) {
       messages.push(req.session.bookingNotice);
       delete req.session.bookingNotice;
@@ -137,7 +139,7 @@ exports.cart = async (req, res, next) => {
     return res.render("../features/booking/views/cart", {
       title: "Xe đã chọn",
       cars: result.cars,
-      error: req.query.error || null,
+      error,
       notice: messages.join(" ") || null,
     });
   } catch (e) {
@@ -175,7 +177,8 @@ exports.confirm = async (req, res) => {
     const message = businessErrors.includes(e.message)
       ? e.message
       : "Không thể xác nhận đặt xe lúc này. Vui lòng thử lại.";
-    res.redirect("/dat-xe/gio-hang?error=" + encodeURIComponent(message));
+    req.session.bookingError = message;
+    res.redirect("/dat-xe/gio-hang");
   }
 };
 exports.carDetail = async (req, res, next) => {
@@ -183,27 +186,26 @@ exports.carDetail = async (req, res, next) => {
     const id = Number(req.params.id);
     const period = req.session.bookingPeriod;
     if (!Number.isSafeInteger(id) || id <= 0)
-      return res
-        .status(404)
-        .render("error", {
-          title: "Không tìm thấy xe",
-          message: "Xe không tồn tại.",
-        });
+      return res.status(404).render("error", {
+        title: "Không tìm thấy xe",
+        message: "Xe không tồn tại.",
+      });
     if (!period || !service.validPeriod(period.start, period.end)) {
       return res.redirect("/dat-xe/tim");
     }
     const car = await service.findCar(id, period);
     if (!car)
-      return res
-        .status(404)
-        .render("error", {
-          title: "Không tìm thấy xe",
-          message: "Xe không tồn tại.",
-        });
+      return res.status(404).render("error", {
+        title: "Không tìm thấy xe",
+        message: "Xe không tồn tại.",
+      });
     res.render("../features/booking/views/car-detail", {
       title: "Chi tiết xe",
       car,
       period,
+      hours:
+        (new Date(`${period.end}+07:00`) - new Date(`${period.start}+07:00`)) /
+        3600000,
     });
   } catch (e) {
     next(e);

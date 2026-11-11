@@ -9,7 +9,7 @@ exports.search = async (f) => {
     params.push(f.type);
   }
   if (f.seats) {
-    where.push("x.SoCho>=?");
+    where.push("x.SoCho=?");
     params.push(Number(f.seats));
   }
   if (f.start && f.end) {
@@ -100,7 +100,7 @@ exports.confirm = async (customerId, items) => {
 exports.history = async (customerId) => {
   const { query } = require("../../shared/db");
   const [r] = await query(
-    "SELECT p.*,p.MaPhieuHienThi FROM tblPhieuDatXe p WHERE p.MaKH=? ORDER BY p.ThoiGianDat DESC",
+    "SELECT p.*,UNIX_TIMESTAMP(p.ThoiGianDat) AS ThoiGianDatUnix FROM tblPhieuDatXe p WHERE p.MaKH=? ORDER BY p.ThoiGianDat DESC",
     [customerId],
   );
   return r;

@@ -6,6 +6,9 @@
     <p><%= car.MoTa || 'Xe sẵn sàng cho chuyến đi của bạn.' %></p>
   </div>
 </section>
+<div class="car-visual tone-0">
+  <img src="<%= car.Anh || '/images/vehicles/default-car.svg' %>" alt="<%= car.TenXe %>" />
+</div>
 <div class="table-wrap">
   <table>
     <tbody>
@@ -15,7 +18,11 @@
       <tr><th>Loại xe</th><td><%= car.LoaiXe %></td></tr>
       <tr><th>Số chỗ</th><td><%= car.SoCho %></td></tr>
       <tr><th>Năm sản xuất</th><td><%= car.NamSanXuat %></td></tr>
+      <tr><th>Hộp số</th><td><%= car.HopSo || 'Chưa cập nhật' %></td></tr>
+      <tr><th>Nhiên liệu</th><td><%= car.NhienLieu || 'Chưa cập nhật' %></td></tr>
       <tr><th>Đơn giá / giờ</th><td><%= Number(car.DonGiaGio).toLocaleString('vi-VN') %> đ</td></tr>
+      <tr><th>Thời lượng thuê</th><td><%= hours %> giờ</td></tr>
+      <tr><th>Chi phí dự kiến</th><td><%= (Number(car.DonGiaGio) * hours).toLocaleString('vi-VN') %> đ</td></tr>
       <tr><th>Nhận xe</th><td><%= period.start.replace('T', ' ') %></td></tr>
       <tr><th>Trả xe</th><td><%= period.end.replace('T', ' ') %></td></tr>
       <tr><th>Trạng thái</th><td><%= car.KhaDung ? 'Còn trống trong khoảng thuê' : 'Không khả dụng trong khoảng thuê' %></td></tr>

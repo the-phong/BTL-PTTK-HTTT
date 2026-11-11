@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="320" viewBox="0 0 640 320" role="img" aria-labelledby="title">
+  <title id="title">Minh họa xe ô tô</title>
+  <rect width="640" height="320" fill="#e8eddf"/>
+  <ellipse cx="320" cy="265" rx="240" ry="22" fill="#c5d1be"/>
+  <path d="M108 204h38l43-73c11-19 29-30 51-30h175c21 0 39 10 51 28l48 75h28c20 0 35 16 35 35v15H76v-15c0-19 13-35 32-35Z" fill="#315d43"/>
+  <path d="m211 139-37 65h290l-40-65c-5-8-13-12-22-12H234c-10 0-18 4-23 12Z" fill="#d7e4d8"/>
+  <path d="M320 127v77" stroke="#315d43" stroke-width="8"/>
+  <circle cx="184" cy="249" r="39" fill="#243d30"/>
+  <circle cx="184" cy="249" r="20" fill="#c7d2c9"/>
+  <circle cx="461" cy="249" r="39" fill="#243d30"/>
+  <circle cx="461" cy="249" r="20" fill="#c7d2c9"/>
+  <path d="M91 215h30m399 0h34" stroke="#efc67f" stroke-width="10" stroke-linecap="round"/>
+</svg>

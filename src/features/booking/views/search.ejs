@@ -31,7 +31,7 @@
         value="<%= seats %>"
         <%= String(filters.seats) === String(seats) ? 'selected' : '' %>
       >
-        <%= seats %> chỗ trở lên
+        <%= seats %> chỗ
       </option>
       <% }) %>
     </select>
@@ -89,7 +89,7 @@
   <article class="car-card">
     <div class="car-visual tone-<%= index % 4 %>">
       <span><%= car.LoaiXe %> · <%= car.SoCho %> CHỖ</span>
-      <div>🚘</div>
+      <img src="<%= car.Anh || '/images/vehicles/default-car.svg' %>" alt="<%= car.TenXe %>" />
       <small><%= car.MaXeHienThi %></small>
     </div>
 
