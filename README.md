@@ -12,6 +12,10 @@
 
 Không có tài khoản mẫu với mật khẩu mặc định; tạo tài khoản qua `/dang-ky`.
 
+`SESSION_SECRET` phải dài ít nhất 32 ký tự. `DB_HOST`, `DB_USER` và `DB_NAME` là các biến bắt buộc. `DB_NAME` chỉ dùng chữ, số và dấu gạch dưới.
+
+Chạy `npm test` cho các kiểm tra không cần database. Khi MySQL đã chạy và schema đã được khởi tạo, dùng `RUN_DB_TESTS=1 npm test` để kiểm tra rollback và hai yêu cầu đặt cùng xe đồng thời. Các bài kiểm tra MySQL tạo dữ liệu riêng rồi xóa sau khi chạy.
+
 ## Cấu trúc
 
 - `src/features`: registration, login, booking theo routes/controller/service/repository.

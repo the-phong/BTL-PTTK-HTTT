@@ -1,0 +1,24 @@
+<%- include('../../../views/partials/header', { title }) %>
+<section class="section-head">
+  <div>
+    <span class="eyebrow">THÔNG TIN XE</span>
+    <h1><%= car.TenXe %></h1>
+    <p><%= car.MoTa || 'Xe sẵn sàng cho chuyến đi của bạn.' %></p>
+  </div>
+</section>
+<div class="table-wrap">
+  <table>
+    <tbody>
+      <tr><th>Mã xe</th><td><%= car.MaXeHienThi %></td></tr>
+      <tr><th>Biển số</th><td><%= car.BienSo %></td></tr>
+      <tr><th>Hãng xe</th><td><%= car.HangXe %></td></tr>
+      <tr><th>Loại xe</th><td><%= car.LoaiXe %></td></tr>
+      <tr><th>Số chỗ</th><td><%= car.SoCho %></td></tr>
+      <tr><th>Năm sản xuất</th><td><%= car.NamSanXuat %></td></tr>
+      <tr><th>Đơn giá / giờ</th><td><%= Number(car.DonGiaGio).toLocaleString('vi-VN') %> đ</td></tr>
+      <tr><th>Trạng thái</th><td><%= car.TrangThai %></td></tr>
+    </tbody>
+  </table>
+</div>
+<p><a href="/dat-xe/tim">← Quay lại danh sách tìm kiếm</a></p>
+<%- include('../../../views/partials/footer') %>

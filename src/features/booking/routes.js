@@ -5,6 +5,7 @@ const express = require("express"),
 const r = express.Router();
 r.use(auth);
 r.get("/tim", c.search);
+r.get("/xe/:id", c.carDetail);
 r.post("/chon", csrf.verify, c.select);
 r.get("/gio-hang", c.cart);
 r.post("/xoa", csrf.verify, c.remove);

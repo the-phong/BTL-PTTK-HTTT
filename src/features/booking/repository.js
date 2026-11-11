@@ -70,7 +70,7 @@ exports.confirm = async (customerId, items) => {
     }
     const crypto = require("node:crypto");
 
-    const code = `PD${crypto.randomUUID().replace(/-/g, "")}`;
+    const code = `PD${crypto.randomBytes(15).toString("hex")}`;
     const [p] = await c.execute(
       "INSERT INTO tblPhieuDatXe(MaPhieuHienThi,MaKH,TongTien) VALUES(?,?,?)",
       [code, customerId, total],
@@ -128,4 +128,12 @@ exports.detail = async (customerId, id) => {
   );
 
   return { ...booking, items };
+};
+
+exports.findCar = async (id) => {
+  const { query } = require("../../shared/db");
+  const [rows] = await query("SELECT * FROM tblXeOTo WHERE MaXe = ? LIMIT 1", [
+    id,
+  ]);
+  return rows[0] || null;
 };

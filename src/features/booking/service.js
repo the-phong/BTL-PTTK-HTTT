@@ -69,6 +69,14 @@ exports.defaultPeriod = () => {
 
 // Tìm kiếm xe.
 exports.search = async (filters) => {
+  const allowedTypes = ["", "SUV", "Sedan", "MPV", "Hatchback", "Bán tải"];
+  const allowedSeats = ["", "4", "5", "7", "9", "16"];
+  if (
+    !allowedTypes.includes(filters.type) ||
+    !allowedSeats.includes(filters.seats)
+  ) {
+    return { error: "Bộ lọc loại xe hoặc số chỗ không hợp lệ." };
+  }
   if (!validPeriod(filters.start, filters.end)) {
     return {
       error:
@@ -169,7 +177,7 @@ exports.addToCart = async (selected, period, rawId) => {
 
   // Không thêm trùng xe.
   if (synced.items.some((item) => item.id === id)) {
-    return synced.items;
+    return synced;
   }
 
   const available = await repo.search({
@@ -183,15 +191,18 @@ exports.addToCart = async (selected, period, rawId) => {
     throw Error("Xe không còn khả dụng trong khoảng thời gian này.");
   }
 
-  return [
-    ...synced.items,
-    {
-      id,
-      start: period.start,
-      end: period.end,
-      quotedPrice: Number(car.DonGiaGio),
-    },
-  ];
+  return {
+    ...synced,
+    items: [
+      ...synced.items,
+      {
+        id,
+        start: period.start,
+        end: period.end,
+        quotedPrice: Number(car.DonGiaGio),
+      },
+    ],
+  };
 };
 
 // Kiểm tra lần cuối trước khi tạo phiếu.
@@ -244,3 +255,4 @@ exports.confirm = async (customerId, items) => {
 
 exports.history = repo.history;
 exports.detail = repo.detail;
+exports.findCar = repo.findCar;

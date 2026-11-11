@@ -102,7 +102,7 @@
           </span>
         </div>
         <strong>
-          <%= Number(car.quotedPrice).toLocaleString('vi-VN') %>
+          <%= Number(car.DonGiaGio).toLocaleString('vi-VN') %>
           <small>đ / giờ</small>
         </strong>
       </div>
@@ -112,6 +112,7 @@
       </p>
 
       <form method="post" action="/dat-xe/chon">
+        <a href="/dat-xe/xe/<%= car.MaXe %>">Xem chi tiết xe →</a>
         <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
         <input type="hidden" name="carId" value="<%= car.MaXe %>" />
         <button class="button outline full">Chọn xe <span>＋</span></button>

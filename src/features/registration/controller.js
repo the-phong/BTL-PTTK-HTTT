@@ -16,9 +16,10 @@ exports.submit = async (req, res, next) => {
         form: d,
         errors: r.errors,
       });
-    req.session.flashMessage =
-      "Đăng ký thành công. Hãy đăng nhập bằng email vừa đăng ký.";
-    return res.redirect("/dang-nhap");
+    return res.render("../features/registration/views/success", {
+      title: "Đăng ký thành công",
+      email: d.email.trim().toLowerCase(),
+    });
   } catch (e) {
     next(e);
   }

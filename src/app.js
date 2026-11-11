@@ -4,6 +4,9 @@ const express = require("express"),
   path = require("path"),
   csrf = require("./shared/csrf");
 const app = express();
+if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32) {
+  throw new Error("SESSION_SECRET phải có ít nhất 32 ký tự trong .env");
+}
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(express.urlencoded({ extended: false, limit: "20kb" }));
@@ -11,7 +14,7 @@ app.use(express.static(path.join(__dirname, "../public")));
 app.use(
   session({
     name: "oto.sid",
-    secret: process.env.SESSION_SECRET || "development-secret-change-me",
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {

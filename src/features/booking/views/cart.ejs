@@ -9,7 +9,11 @@
 </div>
 <% if(error){ %>
 <div class="notice error"><%= error %></div>
-<% } %><% if(!cars.length){ %>
+<% } %>
+<% if(notice){ %>
+<div class="notice"><%= notice %></div>
+<% } %>
+<% if(!cars.length){ %>
 <div class="empty-state">
   Bạn chưa chọn xe nào. <a href="/dat-xe/tim">Tìm xe ngay →</a>
 </div>
@@ -34,7 +38,7 @@
       </p>
     </div>
     <strong
-      ><%= (Number(c.DonGiaGio)*c.hours).toLocaleString('vi-VN') %>
+      ><%= (Number(c.quotedPrice)*c.hours).toLocaleString('vi-VN') %>
       đ</strong
     >
     <form method="post" action="/dat-xe/xoa">
@@ -51,7 +55,7 @@
   <span>Tổng chi phí dự kiến</span
   ><strong
     ><%=
-    cars.reduce((s,c)=>s+Number(c.DonGiaGio)*c.hours,0).toLocaleString('vi-VN')
+    cars.reduce((s,c)=>s+Number(c.quotedPrice)*c.hours,0).toLocaleString('vi-VN')
     %> <small>đ</small></strong
   >
   <form method="post" action="/dat-xe/xac-nhan">
