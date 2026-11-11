@@ -35,6 +35,7 @@ app.use((req, res, next) => {
 });
 app.use("/", require("./features/login/routes"));
 app.use("/", require("./features/registration/routes"));
+app.use("/", require("./features/profile/routes"));
 app.use("/dat-xe", require("./features/booking/routes"));
 app.use((req, res) =>
   res.status(404).render("error", {

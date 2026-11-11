@@ -1,7 +1,7 @@
 const { getPool } = require("../../shared/db");
 const toSqlDateTime = (value) => value.replace("T", " ") + ":00";
 
-exports.search = async (f) => {
+function searchCondition(f) {
   const params = [],
     where = ["x.TrangThai='SAN_SANG'"];
   if (f.type) {
@@ -18,11 +18,33 @@ exports.search = async (f) => {
     );
     params.push(toSqlDateTime(f.end), toSqlDateTime(f.start));
   }
+  return { clause: where.join(" AND "), params };
+}
+
+exports.search = async (f) => {
+  const { clause, params } = searchCondition(f);
   const [rows] = await getPool().execute(
-    `SELECT x.* FROM tblXeOTo x WHERE ${where.join(" AND ")} ORDER BY x.DonGiaGio`,
+    `SELECT x.* FROM tblXeOTo x WHERE ${clause} ORDER BY x.DonGiaGio, x.MaXe`,
     params,
   );
   return rows;
+};
+
+exports.searchPage = async (f, page, pageSize) => {
+  const { clause, params } = searchCondition(f);
+  const [[count]] = await getPool().execute(
+    `SELECT COUNT(*) AS total FROM tblXeOTo x WHERE ${clause}`,
+    params,
+  );
+  const total = Number(count.total);
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const offset = (currentPage - 1) * pageSize;
+  const [cars] = await getPool().execute(
+    `SELECT x.* FROM tblXeOTo x WHERE ${clause} ORDER BY x.DonGiaGio, x.MaXe LIMIT ? OFFSET ?`,
+    [...params, pageSize, offset],
+  );
+  return { cars, total, page: currentPage, totalPages };
 };
 
 exports.confirm = async (customerId, items) => {

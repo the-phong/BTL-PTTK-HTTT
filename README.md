@@ -1,6 +1,6 @@
 # Lăn Bánh — hệ thống thuê xe ô tô
 
-Ứng dụng Node.js/Express, EJS SSR và MySQL cho đăng ký tài khoản, đăng nhập, tìm/chọn nhiều xe, xác nhận đặt xe và xem lịch sử phiếu.
+Ứng dụng Node.js/Express, EJS SSR và MySQL cho đăng ký tài khoản, đăng nhập, cập nhật thông tin cá nhân, tìm/chọn nhiều xe, xác nhận đặt xe và xem lịch sử phiếu. Danh sách xe được chia 12 xe mỗi trang.
 
 ## Chạy ứng dụng
 
@@ -31,6 +31,8 @@ Chạy `npm test` cho các kiểm tra không cần database. Khi MySQL đã ch�
 - `db/migrations`: bảng thành viên, khách hàng, xe, phiếu đặt, chi tiết phiếu.
 - `scripts`: khởi tạo schema và xe mẫu.
 - `public`: CSS và hình ảnh tĩnh.
+
+Ảnh xe minh họa theo nhóm Sedan/Hatchback, SUV, MPV và bán tải nằm trong `public/images/vehicles/`. Các ảnh được tạo cho demo và không phải ảnh của từng xe thực tế.
 
 ## Bảo vệ xung đột
 

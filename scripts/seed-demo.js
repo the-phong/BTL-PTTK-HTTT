@@ -128,8 +128,8 @@ async function seed() {
       const year = 2021 + (index % 5);
       const price = model[5] + (index % 4) * 2000;
       await connection.execute(
-        `INSERT INTO tblXeOTo(MaXeHienThi,TenXe,BienSo,LoaiXe,SoCho,HangXe,NamSanXuat,HopSo,NhienLieu,MoTa,DonGiaGio,TrangThai)
-         VALUES(?,?,?,?,?,?,?,?,?,?,?,?)
+        `INSERT INTO tblXeOTo(MaXeHienThi,TenXe,BienSo,LoaiXe,SoCho,HangXe,NamSanXuat,HopSo,NhienLieu,MoTa,Anh,DonGiaGio,TrangThai)
+         VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
          ON DUPLICATE KEY UPDATE MaXe = LAST_INSERT_ID(MaXe)`,
         [
           code,
@@ -142,6 +142,13 @@ async function seed() {
           "Tự động",
           model[4],
           `${model[0]} đời ${year}, phù hợp cho hành trình thuê xe tự lái.`,
+          model[2] === "SUV"
+            ? "/images/vehicles/suv.webp"
+            : model[2] === "MPV"
+              ? "/images/vehicles/mpv.webp"
+              : model[2] === "Bán tải"
+                ? "/images/vehicles/pickup.webp"
+                : "/images/vehicles/sedan.webp",
           price,
           status,
         ],

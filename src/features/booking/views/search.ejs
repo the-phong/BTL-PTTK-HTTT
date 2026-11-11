@@ -71,7 +71,7 @@
 
 <div class="results-title">
   <h2>Xe phù hợp</h2>
-  <span><%= cars.length %> kết quả</span>
+  <span><%= pagination ? pagination.total : 0 %> kết quả</span>
 </div>
 
 <% if (!filters.start) { %>
@@ -121,5 +121,17 @@
   </article>
   <% }) %>
 </div>
+
+<% if (pagination && pagination.totalPages > 1) { %>
+<nav class="pagination" aria-label="Phân trang xe">
+  <% if (pagination.page > 1) { %>
+  <a href="/dat-xe/tim?<%= pagination.base %>&page=<%= pagination.page - 1 %>">← Trước</a>
+  <% } %>
+  <span>Trang <%= pagination.page %> / <%= pagination.totalPages %></span>
+  <% if (pagination.page < pagination.totalPages) { %>
+  <a href="/dat-xe/tim?<%= pagination.base %>&page=<%= pagination.page + 1 %>">Tiếp →</a>
+  <% } %>
+</nav>
+<% } %>
 
 <%- include('../../../views/partials/footer') %>

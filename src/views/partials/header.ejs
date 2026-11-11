@@ -22,9 +22,9 @@
         <% if (user) { %>
         <a href="/dat-xe/phieu-cua-toi">Phiếu đặt</a>
         <a href="/dat-xe/gio-hang">Đã chọn</a>
-        <span class="nav-user">
+        <a class="nav-user" href="/thong-tin-ca-nhan">
           Xin chào, <%= user.name.split(' ').slice(-1)[0] %>
-        </span>
+        </a>
         <form action="/dang-xuat" method="post" class="inline">
           <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
           <button class="link-button">Đăng xuất</button>

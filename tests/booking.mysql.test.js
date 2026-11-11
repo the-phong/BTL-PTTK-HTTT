@@ -131,7 +131,7 @@ test(
       fixtureData.memberId,
     ]);
     const [[member]] = await pool.execute(
-      "SELECT Email FROM tblThanhVien WHERE MaTV=?",
+      "SELECT Email,SoDienThoai FROM tblThanhVien WHERE MaTV=?",
       [fixtureData.memberId],
     );
     const csrf = (html) => {
@@ -159,10 +159,52 @@ test(
         })
         .expect(302);
 
+      const profile = await agent.get("/thong-tin-ca-nhan").expect(200);
+      assert.match(profile.text, /Thông tin cá nhân/);
+      const duplicateProfile = await agent
+        .post("/thong-tin-ca-nhan")
+        .type("form")
+        .send({
+          name: "Khách Hàng Đã Sửa",
+          birth: "2000-01-01",
+          phone: member.SoDienThoai,
+          email: `${prefix}-other@example.test`,
+          address: "Địa chỉ mới tại Hà Nội",
+          _csrf: csrf(profile.text),
+        })
+        .expect(422);
+      assert.match(
+        duplicateProfile.text,
+        /Email hoặc số điện thoại đã được sử dụng/,
+      );
+      const updatedProfile = await agent
+        .post("/thong-tin-ca-nhan")
+        .type("form")
+        .send({
+          name: "Khách Hàng Đã Sửa",
+          birth: "2000-01-01",
+          phone: member.SoDienThoai,
+          email: `${prefix}-updated@example.test`,
+          address: "Địa chỉ mới tại Hà Nội",
+          _csrf: csrf(profile.text),
+        })
+        .expect(200);
+      assert.match(updatedProfile.text, /Thông tin cá nhân đã được cập nhật/);
+      const [[updatedMember]] = await pool.execute(
+        "SELECT HoTen,Email FROM tblThanhVien WHERE MaTV=?",
+        [fixtureData.memberId],
+      );
+      assert.equal(updatedMember.HoTen, "Khách Hàng Đã Sửa");
+      assert.equal(
+        updatedMember.Email,
+        `${prefix}-updated@example.test`.toLowerCase(),
+      );
+
       const search = await agent
         .get("/dat-xe/tim")
         .query({ type: "SUV", seats: "7", start, end })
         .expect(200);
+      assert.match(search.text, /Xin chào, Sửa/);
       assert.match(search.text, /Test car/);
       await agent
         .post("/dat-xe/chon")

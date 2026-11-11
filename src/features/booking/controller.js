@@ -4,7 +4,12 @@ exports.search = async (req, res, next) => {
   try {
     const field = (value) => (typeof value === "string" ? value : "");
 
-    const firstLoad = Object.keys(req.query).length === 0;
+    const pageOnly =
+      Object.keys(req.query).length === 1 && req.query.page !== undefined;
+    const savedFilters = req.session.bookingFilters;
+    const queryFilters = pageOnly && savedFilters ? savedFilters : req.query;
+    const firstLoad =
+      Object.keys(req.query).length === 0 || (pageOnly && !savedFilters);
     const previousPeriod = req.session.bookingPeriod;
 
     // Giữ thời gian khách đã chọn nếu vẫn còn hợp lệ.
@@ -15,13 +20,13 @@ exports.search = async (req, res, next) => {
         : service.defaultPeriod();
 
     const filters = {
-      type: field(req.query.type),
-      seats: field(req.query.seats),
-      start: firstLoad ? preset.start : field(req.query.start),
-      end: firstLoad ? preset.end : field(req.query.end),
+      type: firstLoad ? "" : field(queryFilters.type),
+      seats: firstLoad ? "" : field(queryFilters.seats),
+      start: firstLoad ? preset.start : field(queryFilters.start),
+      end: firstLoad ? preset.end : field(queryFilters.end),
     };
 
-    const result = await service.search(filters);
+    const result = await service.search(filters, req.query.page || 1);
 
     if (result.error) {
       return res.status(422).render("../features/booking/views/search", {
@@ -30,6 +35,7 @@ exports.search = async (req, res, next) => {
         cars: [],
         error: result.error,
         notice: null,
+        pagination: null,
       });
     }
 
@@ -65,6 +71,7 @@ exports.search = async (req, res, next) => {
       start: filters.start,
       end: filters.end,
     };
+    req.session.bookingFilters = filters;
 
     return res.render("../features/booking/views/search", {
       title: "Tìm xe",
@@ -72,6 +79,12 @@ exports.search = async (req, res, next) => {
       cars: result.cars,
       error: null,
       notice,
+      pagination: {
+        page: result.page,
+        totalPages: result.totalPages,
+        total: result.total,
+        base: new URLSearchParams(filters).toString(),
+      },
     });
   } catch (e) {
     next(e);

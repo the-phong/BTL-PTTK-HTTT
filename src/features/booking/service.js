@@ -68,7 +68,7 @@ exports.defaultPeriod = () => {
 };
 
 // Tìm kiếm xe.
-exports.search = async (filters) => {
+exports.search = async (filters, rawPage = 1) => {
   const allowedTypes = ["", "SUV", "Sedan", "MPV", "Hatchback", "Bán tải"];
   const allowedSeats = ["", "4", "5", "7", "9", "16"];
   if (
@@ -84,7 +84,11 @@ exports.search = async (filters) => {
     };
   }
 
-  return { cars: await repo.search(filters) };
+  const page = Number(rawPage);
+  if (!Number.isSafeInteger(page) || page < 1) {
+    return { error: "Số trang không hợp lệ." };
+  }
+  return repo.searchPage(filters, page, 12);
 };
 
 // Kiểm tra lại toàn bộ xe trong giỏ.

@@ -27,6 +27,7 @@ function period() {
 test("HTTP: đăng nhập, tìm xe, chọn xe, xem giỏ và xác nhận", async () => {
   const originalLogin = loginRepo.findByEmail;
   const originalSearch = bookingRepo.search;
+  const originalSearchPage = bookingRepo.searchPage;
   const originalConfirm = bookingRepo.confirm;
   const hash = await bcrypt.hash("test-password", 4);
   const calls = [];
@@ -55,6 +56,12 @@ test("HTTP: đăng nhập, tìm xe, chọn xe, xem giỏ và xác nhận", async
       TrangThai: "SAN_SANG",
     },
   ];
+  bookingRepo.searchPage = async (_filters, page) => ({
+    cars: await bookingRepo.search(),
+    total: 26,
+    page,
+    totalPages: 3,
+  });
   bookingRepo.confirm = async (customerId, items) => {
     calls.push({ customerId, items });
     return { id: 99, code: "PD99", total: 1320000 };
@@ -77,6 +84,14 @@ test("HTTP: đăng nhập, tìm xe, chọn xe, xem giỏ và xác nhận", async
       .query({ type: "SUV", seats: "7", ...dates })
       .expect(200);
     assert.match(search.text, /55\.000/);
+    assert.match(search.text, /Trang 1 \/ 3/);
+    const secondPage = await agent
+      .get("/dat-xe/tim")
+      .query({ type: "SUV", seats: "7", ...dates, page: 2 })
+      .expect(200);
+    assert.match(secondPage.text, /Trang 2 \/ 3/);
+    const shortPageLink = await agent.get("/dat-xe/tim?page=2").expect(200);
+    assert.match(shortPageLink.text, /Trang 2 \/ 3/);
     const forged = await agent
       .get("/dat-xe/gio-hang?error=FAKE_SYSTEM_ERROR")
       .expect(200);
@@ -100,6 +115,7 @@ test("HTTP: đăng nhập, tìm xe, chọn xe, xem giỏ và xác nhận", async
   } finally {
     loginRepo.findByEmail = originalLogin;
     bookingRepo.search = originalSearch;
+    bookingRepo.searchPage = originalSearchPage;
     bookingRepo.confirm = originalConfirm;
   }
 });

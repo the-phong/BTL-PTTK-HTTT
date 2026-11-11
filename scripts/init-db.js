@@ -72,6 +72,14 @@ const fs = require("fs"),
     await c.query(
       "UPDATE tblXeOTo SET NhienLieu = 'Dầu' WHERE MaXeHienThi IN ('XE0015','XE0027')",
     );
+    await c.query(
+      `UPDATE tblXeOTo SET Anh = CASE
+        WHEN LoaiXe = 'SUV' THEN '/images/vehicles/suv.webp'
+        WHEN LoaiXe = 'MPV' THEN '/images/vehicles/mpv.webp'
+        WHEN LoaiXe = 'Bán tải' THEN '/images/vehicles/pickup.webp'
+        ELSE '/images/vehicles/sedan.webp'
+       END WHERE Anh IS NULL`,
+    );
     console.log("Đã tạo cơ sở dữ liệu và dữ liệu xe mẫu.");
   } catch (e) {
     console.error("Không thể khởi tạo DB:", e.message);
