@@ -26,6 +26,7 @@ app.use(
   }),
 );
 app.use((req, res, next) => {
+  if (req.session.user) res.set("Cache-Control", "private, no-store");
   res.locals.user = req.session.user || null;
   res.locals.csrfToken = csrf.token(req);
   res.locals.flashMessage =

@@ -50,6 +50,8 @@ exports.searchPage = async (f, page, pageSize) => {
 exports.confirm = async (customerId, items) => {
   const c = await getPool().getConnection();
   try {
+    // Mỗi lần kiểm tra lịch đọc dữ liệu đã commit mới nhất sau khi khóa dòng xe.
+    await c.query("SET TRANSACTION ISOLATION LEVEL READ COMMITTED");
     await c.beginTransaction();
     const [locks] = await c.execute(
       `SELECT MaXe,DonGiaGio,TrangThai FROM tblXeOTo WHERE MaXe IN (${items.map(() => "?").join(",")}) ORDER BY MaXe FOR UPDATE`,
@@ -78,8 +80,10 @@ exports.confirm = async (customerId, items) => {
           "Đơn giá đã thay đổi. Vui lòng kiểm tra lại giỏ hàng và xác nhận.",
         );
       }
+      // Khóa dòng xe ở trên tuần tự hóa các yêu cầu cùng xe.
+      // Truy vấn lịch chỉ đọc để tránh khóa khoảng chỉ mục của các xe khác.
       const [busy] = await c.execute(
-        "SELECT ct.MaChiTiet FROM tblChiTietPhieuDat ct JOIN tblPhieuDatXe p ON p.MaPhieu=ct.MaPhieu WHERE ct.MaXe=? AND p.TrangThai IN ('CHO_XAC_NHAN','DA_XAC_NHAN') AND ct.ThoiGianNhan < ? AND ct.ThoiGianTra > ? LIMIT 1 FOR UPDATE",
+        "SELECT ct.MaChiTiet FROM tblChiTietPhieuDat ct JOIN tblPhieuDatXe p ON p.MaPhieu=ct.MaPhieu WHERE ct.MaXe=? AND p.TrangThai IN ('CHO_XAC_NHAN','DA_XAC_NHAN') AND ct.ThoiGianNhan < ? AND ct.ThoiGianTra > ? LIMIT 1",
         [i.id, toSqlDateTime(i.end), toSqlDateTime(i.start)],
       );
       if (busy.length)
@@ -92,10 +96,15 @@ exports.confirm = async (customerId, items) => {
     }
     const crypto = require("node:crypto");
 
-    const code = `PD${crypto.randomBytes(15).toString("hex")}`;
+    const temporaryCode = `TMP${crypto.randomBytes(14).toString("hex")}`;
     const [p] = await c.execute(
       "INSERT INTO tblPhieuDatXe(MaPhieuHienThi,MaKH,TongTien) VALUES(?,?,?)",
-      [code, customerId, total],
+      [temporaryCode, customerId, total],
+    );
+    const code = `PD${String(p.insertId).padStart(6, "0")}`;
+    await c.execute(
+      "UPDATE tblPhieuDatXe SET MaPhieuHienThi=? WHERE MaPhieu=?",
+      [code, p.insertId],
     );
     for (const i of prepared)
       await c.execute(

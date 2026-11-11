@@ -37,3 +37,5 @@ Chạy `npm test` cho các kiểm tra không cần database. Khi MySQL đã ch�
 ## Bảo vệ xung đột
 
 Xác nhận đặt xe dùng transaction, khóa các dòng xe bằng `SELECT ... FOR UPDATE`, kiểm tra lại toàn bộ khoảng thuê rồi mới ghi phiếu và chi tiết. Giá giờ được sao lưu vào chi tiết phiếu. Lịch sử/chi tiết chỉ truy vấn theo mã khách hàng trong session.
+
+Phiếu đặt mới có mã hiển thị `PD` theo sau bởi ID được đệm tối thiểu 6 chữ số, ví dụ `PD000001`. Mã này được ghi trong cùng transaction với phiếu và các chi tiết.

@@ -12,6 +12,8 @@ exports.form = (req, res) => {
 
 exports.review = async (req, res, next) => {
   try {
+    // Dữ liệu cũ không còn được xác nhận sau khi người dùng gửi bản chỉnh sửa.
+    delete req.session.registrationDraft;
     const result = await service.prepare(req.body);
     if (result.errors) {
       return res.status(422).render(registerView, {
@@ -42,9 +44,11 @@ exports.reviewPage = (req, res) => {
 
 exports.edit = (req, res) => {
   if (!req.session.registrationDraft) return res.redirect("/dang-ky");
+  const draft = req.session.registrationDraft;
+  delete req.session.registrationDraft;
   res.render(registerView, {
     title: "Đăng ký tài khoản",
-    form: req.session.registrationDraft,
+    form: draft,
     errors: [],
   });
 };

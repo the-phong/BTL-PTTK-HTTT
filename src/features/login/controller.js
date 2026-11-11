@@ -22,7 +22,11 @@ exports.submit = async (req, res, next) => {
   }
 };
 exports.logout = (req, res, next) =>
-  req.session.destroy((e) => (e ? next(e) : res.redirect("/")));
+  req.session.destroy((e) => {
+    if (e) return next(e);
+    res.clearCookie("oto.sid", { path: "/" });
+    return res.redirect("/");
+  });
 exports.home = (req, res) =>
   res.render("../features/login/views/home", {
     title: "Trang chủ",

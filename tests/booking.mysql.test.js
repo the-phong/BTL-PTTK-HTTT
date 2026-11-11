@@ -372,3 +372,327 @@ test(
     }
   },
 );
+
+test(
+  "MySQL: hai khách khác nhau cùng đặt một xe, chỉ một khách được xác nhận",
+  { skip: !enabled },
+  async () => {
+    const first = await fixture();
+    const pool = getPool();
+    const [member] = await pool.execute(
+      "INSERT INTO tblThanhVien(HoTen,NgaySinh,SoDienThoai,Email,DiaChi,MatKhau) VALUES(?,?,?,?,?,?)",
+      [
+        "Second Customer",
+        "2000-01-01",
+        `0977${Date.now().toString().slice(-6)}`,
+        `${prefix}-second@example.test`,
+        "Test address",
+        "test-only",
+      ],
+    );
+    const [customer] = await pool.execute(
+      "INSERT INTO tblKhachHang(MaTV,MaKhachHang) VALUES(?,?)",
+      [member.insertId, `${prefix}-SECOND`],
+    );
+    const start = "2090-04-01T08:00";
+    const end = "2090-04-03T08:00";
+    const items = [
+      { id: first.carId, start, end, quotedPrice: 50000, hours: 48 },
+    ];
+    try {
+      const results = await Promise.allSettled([
+        repo.confirm(first.customerId, items),
+        repo.confirm(customer.insertId, items),
+      ]);
+      assert.equal(
+        results.filter((result) => result.status === "fulfilled").length,
+        1,
+      );
+      assert.equal(
+        results.filter((result) => result.status === "rejected").length,
+        1,
+      );
+      assert.match(
+        results.find((result) => result.status === "rejected").reason.message,
+        /đặt trong khoảng thời gian này/,
+      );
+      const [[saved]] = await pool.execute(
+        `SELECT COUNT(*) AS total FROM tblChiTietPhieuDat ct
+         JOIN tblPhieuDatXe p ON p.MaPhieu = ct.MaPhieu
+         WHERE ct.MaXe = ? AND p.MaKH IN (?, ?)`,
+        [first.carId, first.customerId, customer.insertId],
+      );
+      assert.equal(saved.total, 1);
+      const unavailable = await repo.search({ start, end });
+      assert.equal(
+        unavailable.some((car) => car.MaXe === first.carId),
+        false,
+      );
+      const adjacent = await repo.search({
+        start: end,
+        end: "2090-04-04T08:00",
+      });
+      assert.equal(
+        adjacent.some((car) => car.MaXe === first.carId),
+        true,
+      );
+    } finally {
+      await pool.execute("DELETE FROM tblPhieuDatXe WHERE MaKH IN (?, ?)", [
+        first.customerId,
+        customer.insertId,
+      ]);
+      await pool.execute("DELETE FROM tblThanhVien WHERE MaTV=?", [
+        member.insertId,
+      ]);
+      await cleanup(first);
+    }
+  },
+);
+
+test(
+  "HTTP + MySQL: hai giỏ cùng xe, khách xác nhận sau nhận thông báo xung đột",
+  { skip: !enabled },
+  async () => {
+    const request = require("supertest");
+    const bcrypt = require("bcryptjs");
+    const app = require("../src/app");
+    const first = await fixture();
+    const pool = getPool();
+    const password = "race-test-password";
+    const hash = await bcrypt.hash(password, 4);
+    await pool.execute("UPDATE tblThanhVien SET MatKhau=? WHERE MaTV=?", [
+      hash,
+      first.memberId,
+    ]);
+    const [member] = await pool.execute(
+      "INSERT INTO tblThanhVien(HoTen,NgaySinh,SoDienThoai,Email,DiaChi,MatKhau) VALUES(?,?,?,?,?,?)",
+      [
+        "Second Customer",
+        "2000-01-01",
+        `0965${Date.now().toString().slice(-6)}`,
+        `${prefix}-race@example.test`,
+        "Test address",
+        hash,
+      ],
+    );
+    const [customer] = await pool.execute(
+      "INSERT INTO tblKhachHang(MaTV,MaKhachHang) VALUES(?,?)",
+      [member.insertId, `${prefix}-RACE`],
+    );
+    const token = (html) => {
+      const match = /name="_csrf" value="([a-f0-9]+)"/.exec(html);
+      assert.ok(match);
+      return match[1];
+    };
+    const format = (date) =>
+      new Date(date.getTime() + 7 * 3600000).toISOString().slice(0, 13) + ":00";
+    const startDate = new Date(Date.now() + 4 * 86400000);
+    startDate.setUTCHours(1, 0, 0, 0);
+    const start = format(startDate);
+    const end = format(new Date(startDate.getTime() + 24 * 3600000));
+    const agents = [request.agent(app), request.agent(app)];
+    const emails = [`${prefix}@example.test`, `${prefix}-race@example.test`];
+    try {
+      for (let index = 0; index < agents.length; index++) {
+        const agent = agents[index];
+        const login = await agent.get("/dang-nhap").expect(200);
+        await agent
+          .post("/dang-nhap")
+          .type("form")
+          .send({
+            email: emails[index],
+            password,
+            _csrf: token(login.text),
+          })
+          .expect(302);
+        const search = await agent
+          .get("/dat-xe/tim")
+          .query({
+            type: "SUV",
+            seats: "7",
+            start,
+            end,
+          })
+          .expect(200);
+        assert.match(search.text, /Test car/);
+        await agent
+          .post("/dat-xe/chon")
+          .type("form")
+          .send({
+            carId: first.carId,
+            _csrf: token(search.text),
+          })
+          .expect(302);
+      }
+      const firstCart = await agents[0].get("/dat-xe/gio-hang").expect(200);
+      const secondCart = await agents[1].get("/dat-xe/gio-hang").expect(200);
+      assert.match(firstCart.text, /Test car/);
+      assert.match(secondCart.text, /Test car/);
+      const winner = await agents[0]
+        .post("/dat-xe/xac-nhan")
+        .type("form")
+        .send({
+          _csrf: token(firstCart.text),
+        })
+        .expect(302);
+      assert.match(winner.headers.location, /^\/dat-xe\/phieu\/\d+$/);
+      const loser = await agents[1]
+        .post("/dat-xe/xac-nhan")
+        .type("form")
+        .send({
+          _csrf: token(secondCart.text),
+        })
+        .expect(302);
+      assert.equal(loser.headers.location, "/dat-xe/gio-hang");
+      const loserCart = await agents[1].get(loser.headers.location).expect(200);
+      assert.match(loserCart.text, /Xe vừa được khách hàng khác đặt/);
+      const [[count]] = await pool.execute(
+        "SELECT COUNT(*) AS total FROM tblChiTietPhieuDat WHERE MaXe=? AND ThoiGianNhan=?",
+        [first.carId, start.replace("T", " ") + ":00"],
+      );
+      assert.equal(count.total, 1);
+    } finally {
+      await pool.execute("DELETE FROM tblPhieuDatXe WHERE MaKH IN (?, ?)", [
+        first.customerId,
+        customer.insertId,
+      ]);
+      await pool.execute("DELETE FROM tblThanhVien WHERE MaTV=?", [
+        member.insertId,
+      ]);
+      await cleanup(first);
+    }
+  },
+);
+
+async function secondCustomer() {
+  const pool = getPool();
+  const suffix = crypto.randomBytes(5).toString("hex");
+  const [member] = await pool.execute(
+    "INSERT INTO tblThanhVien(HoTen,NgaySinh,SoDienThoai,Email,DiaChi,MatKhau) VALUES(?,?,?,?,?,?)",
+    [
+      "Second Customer",
+      "2000-01-01",
+      `098${String(Date.now()).slice(-7)}`,
+      `race-${suffix}@example.test`,
+      "Test address",
+      "test-only",
+    ],
+  );
+  const [customer] = await pool.execute(
+    "INSERT INTO tblKhachHang(MaTV,MaKhachHang) VALUES(?,?)",
+    [member.insertId, `RACE-${suffix}`],
+  );
+  return { memberId: member.insertId, customerId: customer.insertId };
+}
+
+test(
+  "MySQL: hai khách thuê cùng xe giao nhau một phần thì khách thứ hai bị từ chối",
+  { skip: !enabled },
+  async () => {
+    const car = await fixture();
+    const other = await secondCustomer();
+    const pool = getPool();
+    try {
+      await repo.confirm(car.customerId, [
+        {
+          id: car.carId,
+          start: "2090-05-12T08:00",
+          end: "2090-05-13T08:00",
+          quotedPrice: 50000,
+          hours: 24,
+        },
+      ]);
+      const overlap = { start: "2090-05-12T18:00", end: "2090-05-14T08:00" };
+      const results = await repo.search(overlap);
+      assert.equal(
+        results.some((row) => row.MaXe === car.carId),
+        false,
+      );
+      await assert.rejects(
+        repo.confirm(other.customerId, [
+          {
+            id: car.carId,
+            ...overlap,
+            quotedPrice: 50000,
+            hours: 38,
+          },
+        ]),
+        /đặt trong khoảng thời gian này/,
+      );
+      const [[count]] = await pool.execute(
+        "SELECT COUNT(*) AS total FROM tblChiTietPhieuDat WHERE MaXe=?",
+        [car.carId],
+      );
+      assert.equal(count.total, 1);
+    } finally {
+      await pool.execute("DELETE FROM tblPhieuDatXe WHERE MaKH=?", [
+        other.customerId,
+      ]);
+      await pool.execute("DELETE FROM tblThanhVien WHERE MaTV=?", [
+        other.memberId,
+      ]);
+      await cleanup(car);
+    }
+  },
+);
+
+test(
+  "MySQL: hai khách thuê hai xe khác nhau cùng thời gian đều được xác nhận",
+  { skip: !enabled },
+  async () => {
+    const first = await fixture();
+    const second = await secondCustomer();
+    const pool = getPool();
+    const suffix = crypto.randomBytes(5).toString("hex");
+    const [car] = await pool.execute(
+      "INSERT INTO tblXeOTo(MaXeHienThi,TenXe,BienSo,LoaiXe,SoCho,HangXe,NamSanXuat,DonGiaGio) VALUES(?,?,?,?,?,?,?,?)",
+      [
+        `DIFF-${suffix}`,
+        "Different car",
+        `DIFF-${suffix}`,
+        "SUV",
+        7,
+        "Test",
+        2024,
+        50000,
+      ],
+    );
+    const period = {
+      start: "2090-06-12T08:00",
+      end: "2090-06-13T08:00",
+      quotedPrice: 50000,
+      hours: 24,
+    };
+    try {
+      const results = await Promise.allSettled([
+        repo.confirm(first.customerId, [{ id: first.carId, ...period }]),
+        repo.confirm(second.customerId, [{ id: car.insertId, ...period }]),
+      ]);
+      assert.deepEqual(
+        results.filter((result) => result.status === "rejected").map((result) => ({
+          code: result.reason.code,
+          message: result.reason.message,
+        })),
+        [],
+      );
+      assert.equal(
+        results.filter((result) => result.status === "fulfilled").length,
+        2,
+      );
+      const [[count]] = await pool.execute(
+        "SELECT COUNT(*) AS total FROM tblPhieuDatXe WHERE MaKH IN (?, ?)",
+        [first.customerId, second.customerId],
+      );
+      assert.equal(count.total, 2);
+    } finally {
+      await pool.execute("DELETE FROM tblPhieuDatXe WHERE MaKH=?", [
+        second.customerId,
+      ]);
+      await pool.execute("DELETE FROM tblXeOTo WHERE MaXe=?", [car.insertId]);
+      await pool.execute("DELETE FROM tblThanhVien WHERE MaTV=?", [
+        second.memberId,
+      ]);
+      await cleanup(first);
+    }
+  },
+);

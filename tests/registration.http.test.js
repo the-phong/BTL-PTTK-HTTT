@@ -67,14 +67,32 @@ test("HTTP đăng ký: xem lại, chỉnh sửa, xác nhận rồi mới lưu", 
     assert.equal(writes, 0);
     const edit = await agent.get("/dang-ky/sua").expect(200);
     assert.match(edit.text, /Nguyễn Thế Phong/);
+    await agent
+      .post("/dang-ky/xac-nhan")
+      .type("form")
+      .send({
+        _csrf: token(edit.text),
+      })
+      .expect(302);
+    assert.equal(writes, 0);
+    const revised = await agent
+      .post("/dang-ky")
+      .type("form")
+      .send({
+        ...profile({ name: "Nguyễn Thế Phong Mới", email: "NEW@EXAMPLE.TEST" }),
+        _csrf: token(edit.text),
+      })
+      .expect(200);
+    assert.match(revised.text, /Nguyễn Thế Phong Mới/);
     const success = await agent
       .post("/dang-ky/xac-nhan")
       .type("form")
       .send({
-        _csrf: token(review.text),
+        _csrf: token(revised.text),
       })
       .expect(200);
     assert.match(success.text, /Đăng ký thành công/);
+    assert.match(success.text, /new@example.test/);
     assert.equal(writes, 1);
     await agent
       .post("/dang-ky/xac-nhan")
