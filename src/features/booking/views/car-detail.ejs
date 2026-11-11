@@ -16,9 +16,20 @@
       <tr><th>Số chỗ</th><td><%= car.SoCho %></td></tr>
       <tr><th>Năm sản xuất</th><td><%= car.NamSanXuat %></td></tr>
       <tr><th>Đơn giá / giờ</th><td><%= Number(car.DonGiaGio).toLocaleString('vi-VN') %> đ</td></tr>
-      <tr><th>Trạng thái</th><td><%= car.TrangThai %></td></tr>
+      <tr><th>Nhận xe</th><td><%= period.start.replace('T', ' ') %></td></tr>
+      <tr><th>Trả xe</th><td><%= period.end.replace('T', ' ') %></td></tr>
+      <tr><th>Trạng thái</th><td><%= car.KhaDung ? 'Còn trống trong khoảng thuê' : 'Không khả dụng trong khoảng thuê' %></td></tr>
     </tbody>
   </table>
 </div>
+<% if (car.KhaDung) { %>
+<form method="post" action="/dat-xe/chon">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+  <input type="hidden" name="carId" value="<%= car.MaXe %>" />
+  <button class="button primary">Chọn xe <span>＋</span></button>
+</form>
+<% } else { %>
+<div class="notice error">Xe không còn khả dụng trong khoảng thời gian đã chọn. Vui lòng tìm xe khác.</div>
+<% } %>
 <p><a href="/dat-xe/tim">← Quay lại danh sách tìm kiếm</a></p>
 <%- include('../../../views/partials/footer') %>

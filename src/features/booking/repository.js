@@ -130,10 +130,19 @@ exports.detail = async (customerId, id) => {
   return { ...booking, items };
 };
 
-exports.findCar = async (id) => {
+exports.findCar = async (id, period) => {
   const { query } = require("../../shared/db");
-  const [rows] = await query("SELECT * FROM tblXeOTo WHERE MaXe = ? LIMIT 1", [
-    id,
-  ]);
+  const [rows] = await query(
+    `SELECT x.*,
+            CASE WHEN x.TrangThai = 'SAN_SANG' AND NOT EXISTS (
+              SELECT 1 FROM tblChiTietPhieuDat ct
+              JOIN tblPhieuDatXe p ON p.MaPhieu = ct.MaPhieu
+              WHERE ct.MaXe = x.MaXe
+                AND p.TrangThai IN ('CHO_XAC_NHAN', 'DA_XAC_NHAN')
+                AND ct.ThoiGianNhan < ? AND ct.ThoiGianTra > ?
+            ) THEN 1 ELSE 0 END AS KhaDung
+     FROM tblXeOTo x WHERE x.MaXe = ? LIMIT 1`,
+    [toSqlDateTime(period.end), toSqlDateTime(period.start), id],
+  );
   return rows[0] || null;
 };

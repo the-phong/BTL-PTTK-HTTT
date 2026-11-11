@@ -255,4 +255,7 @@ exports.confirm = async (customerId, items) => {
 
 exports.history = repo.history;
 exports.detail = repo.detail;
-exports.findCar = repo.findCar;
+exports.findCar = async (id, period) => {
+  if (!period || !validPeriod(period.start, period.end)) return null;
+  return repo.findCar(id, period);
+};

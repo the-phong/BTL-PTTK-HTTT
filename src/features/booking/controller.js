@@ -181,6 +181,7 @@ exports.confirm = async (req, res) => {
 exports.carDetail = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
+    const period = req.session.bookingPeriod;
     if (!Number.isSafeInteger(id) || id <= 0)
       return res
         .status(404)
@@ -188,7 +189,10 @@ exports.carDetail = async (req, res, next) => {
           title: "Không tìm thấy xe",
           message: "Xe không tồn tại.",
         });
-    const car = await service.findCar(id);
+    if (!period || !service.validPeriod(period.start, period.end)) {
+      return res.redirect("/dat-xe/tim");
+    }
+    const car = await service.findCar(id, period);
     if (!car)
       return res
         .status(404)
@@ -199,6 +203,7 @@ exports.carDetail = async (req, res, next) => {
     res.render("../features/booking/views/car-detail", {
       title: "Chi tiết xe",
       car,
+      period,
     });
   } catch (e) {
     next(e);
