@@ -10,7 +10,7 @@
     <span class="eyebrow">BƯỚC 01 · THÔNG TIN CÁ NHÂN</span>
     <h2>Tạo tài khoản</h2>
     <p class="muted">Điền thông tin để bắt đầu.</p>
-    <% if(errors){ %>
+    <% if (errors && errors.length > 0) { %>
     <div class="notice error">
       <ul>
         <% errors.forEach(e=>{ %>

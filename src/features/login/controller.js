@@ -8,12 +8,10 @@ exports.submit = async (req, res, next) => {
   try {
     const user = await service.authenticate(req.body.email, req.body.password);
     if (!user)
-      return res
-        .status(401)
-        .render("../features/login/views/login", {
-          title: "Đăng nhập",
-          error: "Email hoặc mật khẩu chưa chính xác.",
-        });
+      return res.status(401).render("../features/login/views/login", {
+        title: "Đăng nhập",
+        error: "Email hoặc mật khẩu chưa chính xác.",
+      });
     req.session.regenerate((err) => {
       if (err) return next(err);
       req.session.user = user;

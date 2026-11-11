@@ -34,22 +34,18 @@ app.use("/", require("./features/login/routes"));
 app.use("/", require("./features/registration/routes"));
 app.use("/dat-xe", require("./features/booking/routes"));
 app.use((req, res) =>
-  res
-    .status(404)
-    .render("error", {
-      title: "Không tìm thấy trang",
-      message: "Trang bạn yêu cầu không tồn tại.",
-    }),
+  res.status(404).render("error", {
+    title: "Không tìm thấy trang",
+    message: "Trang bạn yêu cầu không tồn tại.",
+  }),
 );
 app.use((err, req, res, next) => {
   console.error(err);
   if (res.headersSent) return next(err);
-  res
-    .status(500)
-    .render("error", {
-      title: "Có lỗi xảy ra",
-      message: "Hệ thống chưa thể xử lý yêu cầu. Vui lòng thử lại sau.",
-    });
+  res.status(500).render("error", {
+    title: "Có lỗi xảy ra",
+    message: "Hệ thống chưa thể xử lý yêu cầu. Vui lòng thử lại sau.",
+  });
 });
 const port = Number(process.env.PORT || 3000);
 if (require.main === module)

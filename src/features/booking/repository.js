@@ -1,4 +1,6 @@
 const { getPool } = require("../../shared/db");
+const toSqlDateTime = (value) => value.replace("T", " ") + ":00";
+
 exports.search = async (f) => {
   const params = [],
     where = ["x.TrangThai='SAN_SANG'"];
@@ -14,7 +16,7 @@ exports.search = async (f) => {
     where.push(
       "NOT EXISTS (SELECT 1 FROM tblChiTietPhieuDat ct JOIN tblPhieuDatXe p ON p.MaPhieu=ct.MaPhieu WHERE ct.MaXe=x.MaXe AND p.TrangThai IN ('CHO_XAC_NHAN','DA_XAC_NHAN') AND ct.ThoiGianNhan < ? AND ct.ThoiGianTra > ?)",
     );
-    params.push(f.end, f.start);
+    params.push(toSqlDateTime(f.end), toSqlDateTime(f.start));
   }
   const [rows] = await getPool().execute(
     `SELECT x.* FROM tblXeOTo x WHERE ${where.join(" AND ")} ORDER BY x.DonGiaGio`,
@@ -22,6 +24,7 @@ exports.search = async (f) => {
   );
   return rows;
 };
+
 exports.confirm = async (customerId, items) => {
   const c = await getPool().getConnection();
   try {
@@ -40,11 +43,22 @@ exports.confirm = async (customerId, items) => {
     for (const i of items) {
       const x = locks.find((a) => a.MaXe === Number(i.id));
       if (!x) throw Error("Xe không tồn tại.");
-      const hours = (new Date(i.end) - new Date(i.start)) / 3600000;
-      if (!(hours > 0)) throw Error("Khoảng thời gian thuê không hợp lệ.");
+      const hours = i.hours;
+
+      if (!Number.isFinite(hours) || hours <= 0) {
+        throw Error("Khoảng thời gian thuê không hợp lệ.");
+      }
+
+      const currentPrice = Number(x.DonGiaGio);
+
+      if (currentPrice !== Number(i.quotedPrice)) {
+        throw Error(
+          "Đơn giá đã thay đổi. Vui lòng kiểm tra lại giỏ hàng và xác nhận.",
+        );
+      }
       const [busy] = await c.execute(
         "SELECT ct.MaChiTiet FROM tblChiTietPhieuDat ct JOIN tblPhieuDatXe p ON p.MaPhieu=ct.MaPhieu WHERE ct.MaXe=? AND p.TrangThai IN ('CHO_XAC_NHAN','DA_XAC_NHAN') AND ct.ThoiGianNhan < ? AND ct.ThoiGianTra > ? LIMIT 1 FOR UPDATE",
-        [i.id, i.end, i.start],
+        [i.id, toSqlDateTime(i.end), toSqlDateTime(i.start)],
       );
       if (busy.length)
         throw Error(
@@ -54,7 +68,9 @@ exports.confirm = async (customerId, items) => {
       total += cost;
       prepared.push({ x, start: i.start, end: i.end, hours, cost });
     }
-    const code = `PD${Date.now()}`;
+    const crypto = require("node:crypto");
+
+    const code = `PD${crypto.randomUUID().replace(/-/g, "")}`;
     const [p] = await c.execute(
       "INSERT INTO tblPhieuDatXe(MaPhieuHienThi,MaKH,TongTien) VALUES(?,?,?)",
       [code, customerId, total],
@@ -65,8 +81,8 @@ exports.confirm = async (customerId, items) => {
         [
           p.insertId,
           i.x.MaXe,
-          i.start.replace("T", " "),
-          i.end.replace("T", " "),
+          toSqlDateTime(i.start),
+          toSqlDateTime(i.end),
           i.x.DonGiaGio,
           i.hours,
           i.cost,
@@ -89,16 +105,27 @@ exports.history = async (customerId) => {
   );
   return r;
 };
+
 exports.detail = async (customerId, id) => {
   const { query } = require("../../shared/db");
-  const [p] = await query(
-    "SELECT p.* FROM tblPhieuDatXe p WHERE p.MaKH=? AND p.MaPhieu=?",
+
+  const [rows] = await query(
+    `SELECT p.*
+     FROM tblPhieuDatXe p
+     WHERE p.MaKH = ? AND p.MaPhieu = ?`,
     [customerId, id],
   );
-  if (!p) return null;
+
+  const booking = rows[0];
+  if (!booking) return null;
+
   const [items] = await query(
-    "SELECT ct.*,x.TenXe,x.BienSo,x.MaXeHienThi FROM tblChiTietPhieuDat ct JOIN tblXeOTo x ON x.MaXe=ct.MaXe WHERE ct.MaPhieu=?",
+    `SELECT ct.*, x.TenXe, x.BienSo, x.MaXeHienThi
+     FROM tblChiTietPhieuDat ct
+     JOIN tblXeOTo x ON x.MaXe = ct.MaXe
+     WHERE ct.MaPhieu = ?`,
     [id],
   );
-  return { ...p, items };
+
+  return { ...booking, items };
 };
