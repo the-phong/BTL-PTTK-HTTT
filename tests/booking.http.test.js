@@ -119,3 +119,110 @@ test("HTTP: đăng nhập, tìm xe, chọn xe, xem giỏ và xác nhận", async
     bookingRepo.confirm = originalConfirm;
   }
 });
+
+test("HTTP: hai xe giữ hai khoảng thuê khác nhau trong cùng phiếu", async () => {
+  const originalLogin = loginRepo.findByEmail;
+  const originalSearch = bookingRepo.search;
+  const originalSearchPage = bookingRepo.searchPage;
+  const originalConfirm = bookingRepo.confirm;
+  const hash = await bcrypt.hash("test-password", 4);
+  const cars = [10, 11].map((id) => ({
+    MaXe: id,
+    MaXeHienThi: `XE${id}`,
+    TenXe: `Xe ${id}`,
+    BienSo: `30A-${id}`,
+    LoaiXe: "SUV",
+    SoCho: 7,
+    HangXe: "Test",
+    NamSanXuat: 2024,
+    DonGiaGio: 50000,
+    TrangThai: "SAN_SANG",
+  }));
+  let confirmed;
+  loginRepo.findByEmail = async () => ({
+    MaTV: 1,
+    MaKH: 2,
+    MaKhachHang: "KH000002",
+    HoTen: "Khách Hàng",
+    Email: "customer@example.test",
+    MatKhau: hash,
+  });
+  bookingRepo.search = async () => cars;
+  bookingRepo.searchPage = async (_filters, page) => ({
+    cars,
+    total: 2,
+    page,
+    totalPages: 1,
+  });
+  bookingRepo.confirm = async (_customerId, items) => {
+    confirmed = items;
+    return { id: 99, code: "PD99", total: 3600000 };
+  };
+  try {
+    const agent = request.agent(app);
+    const login = await agent.get("/dang-nhap").expect(200);
+    await agent
+      .post("/dang-nhap")
+      .type("form")
+      .send({
+        email: "customer@example.test",
+        password: "test-password",
+        _csrf: csrf(login.text),
+      })
+      .expect(302);
+
+    const first = period();
+    const second = {
+      start: first.start,
+      end: new Date(
+        new Date(`${first.end}+07:00`).getTime() + 86400000 + 7 * 3600000,
+      )
+        .toISOString()
+        .slice(0, 16),
+    };
+    const firstSearch = await agent
+      .get("/dat-xe/tim")
+      .query({ type: "SUV", seats: "7", ...first })
+      .expect(200);
+    await agent
+      .post("/dat-xe/chon")
+      .type("form")
+      .send({ carId: 10, _csrf: csrf(firstSearch.text) })
+      .expect(302);
+    const secondSearch = await agent
+      .get("/dat-xe/tim")
+      .query({ type: "SUV", seats: "7", ...second })
+      .expect(200);
+    await agent
+      .post("/dat-xe/chon")
+      .type("form")
+      .send({ carId: 11, _csrf: csrf(secondSearch.text) })
+      .expect(302);
+    const cart = await agent.get("/dat-xe/gio-hang").expect(200);
+    assert.match(cart.text, /1\.200\.000/);
+    assert.match(cart.text, /2\.400\.000/);
+    assert.match(cart.text, /3\.600\.000/);
+    await agent
+      .post("/dat-xe/xac-nhan")
+      .type("form")
+      .send({ _csrf: csrf(cart.text) })
+      .expect(302);
+    assert.deepEqual(
+      confirmed.map((item) => item.hours),
+      [24, 48],
+    );
+    assert.deepEqual(
+      confirmed.map((item) => item.start),
+      [first.start, second.start],
+    );
+    assert.deepEqual(
+      confirmed.map((item) => item.end),
+      [first.end, second.end],
+    );
+  } finally {
+    loginRepo.findByEmail = originalLogin;
+    bookingRepo.search = originalSearch;
+    bookingRepo.searchPage = originalSearchPage;
+    bookingRepo.confirm = originalConfirm;
+  }
+});

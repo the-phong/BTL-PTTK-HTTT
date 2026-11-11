@@ -93,24 +93,9 @@ exports.search = async (filters, rawPage = 1) => {
 
 // Kiểm tra lại toàn bộ xe trong giỏ.
 // refreshPrices=true: cập nhật giá khách hàng sẽ nhìn thấy.
-exports.syncCart = async (selected, period, refreshPrices = false) => {
+exports.syncCart = async (selected, refreshPrices = false) => {
   const original = Array.isArray(selected) ? selected : [];
-
-  if (!period || !validPeriod(period.start, period.end)) {
-    return {
-      items: [],
-      cars: [],
-      removed: original.length,
-      priceChanged: 0,
-    };
-  }
-
-  const available = await repo.search({
-    start: period.start,
-    end: period.end,
-  });
-
-  const byId = new Map(available.map((car) => [Number(car.MaXe), car]));
+  const availability = new Map();
 
   const items = [];
   const cars = [];
@@ -119,13 +104,28 @@ exports.syncCart = async (selected, period, refreshPrices = false) => {
 
   for (const previous of original) {
     const id = Number(previous.id);
-    const car = byId.get(id);
-
-    if (!Number.isSafeInteger(id) || id <= 0 || seen.has(id) || !car) {
+    if (
+      !Number.isSafeInteger(id) ||
+      id <= 0 ||
+      seen.has(id) ||
+      !validPeriod(previous.start, previous.end)
+    ) {
       continue;
     }
-
     seen.add(id);
+    const key = `${previous.start}|${previous.end}`;
+    if (!availability.has(key)) {
+      const available = await repo.search({
+        start: previous.start,
+        end: previous.end,
+      });
+      availability.set(
+        key,
+        new Map(available.map((car) => [Number(car.MaXe), car])),
+      );
+    }
+    const car = availability.get(key).get(id);
+    if (!car) continue;
 
     const currentPrice = Number(car.DonGiaGio);
     const oldPrice =
@@ -142,17 +142,17 @@ exports.syncCart = async (selected, period, refreshPrices = false) => {
 
     items.push({
       id,
-      start: period.start,
-      end: period.end,
+      start: previous.start,
+      end: previous.end,
       quotedPrice,
     });
 
     cars.push({
       ...car,
       id,
-      start: period.start,
-      end: period.end,
-      hours: hoursBetween(period.start, period.end),
+      start: previous.start,
+      end: previous.end,
+      hours: hoursBetween(previous.start, previous.end),
       quotedPrice,
     });
   }
@@ -177,11 +177,13 @@ exports.addToCart = async (selected, period, rawId) => {
     throw Error("Hãy tìm kiếm lại với khoảng thời gian hợp lệ.");
   }
 
-  const synced = await exports.syncCart(selected, period);
+  const synced = await exports.syncCart(selected);
 
   // Không thêm trùng xe.
   if (synced.items.some((item) => item.id === id)) {
-    return synced;
+    throw Error(
+      "Xe đã có trong danh sách. Hãy xóa xe trước khi chọn lại thời gian thuê.",
+    );
   }
 
   const available = await repo.search({
@@ -215,13 +217,6 @@ exports.confirm = async (customerId, items) => {
     throw Error("Vui lòng chọn ít nhất một xe.");
   }
 
-  const start = items[0].start;
-  const end = items[0].end;
-
-  if (!validPeriod(start, end)) {
-    throw Error("Thời gian thuê không hợp lệ.");
-  }
-
   const ids = new Set();
 
   const prepared = items.map((item) => {
@@ -232,8 +227,7 @@ exports.confirm = async (customerId, items) => {
       !Number.isSafeInteger(id) ||
       id <= 0 ||
       ids.has(id) ||
-      item.start !== start ||
-      item.end !== end ||
+      !validPeriod(item.start, item.end) ||
       item.quotedPrice == null ||
       !Number.isFinite(price) ||
       price < 0
@@ -247,10 +241,10 @@ exports.confirm = async (customerId, items) => {
 
     return {
       id,
-      start,
-      end,
+      start: item.start,
+      end: item.end,
       quotedPrice: price,
-      hours: hoursBetween(start, end),
+      hours: hoursBetween(item.start, item.end),
     };
   });
 

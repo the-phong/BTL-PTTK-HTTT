@@ -39,6 +39,7 @@
         Nhận: <%= c.start.replace('T',' ') %> &nbsp;→&nbsp; Trả: <%=
         c.end.replace('T',' ') %>
       </p>
+      <p><%= c.hours %> giờ × <%= Number(c.quotedPrice).toLocaleString('vi-VN') %> đ/giờ</p>
     </div>
     <strong
       ><%= (Number(c.quotedPrice)*c.hours).toLocaleString('vi-VN') %>
@@ -68,6 +69,7 @@
       Xác nhận đặt xe <span>→</span>
     </button>
   </form>
+  <p><a href="/dat-xe/tim">＋ Tìm thêm xe với thời gian thuê khác</a></p>
   <p>Đơn giá được xác nhận lại tại thời điểm đặt.</p>
 </div>
 <% } %><%- include('../../../views/partials/footer') %>

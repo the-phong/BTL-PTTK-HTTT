@@ -39,34 +39,8 @@ exports.search = async (req, res, next) => {
       });
     }
 
-    let notice = null;
-
-    const periodChanged =
-      !previousPeriod ||
-      previousPeriod.start !== filters.start ||
-      previousPeriod.end !== filters.end;
-
-    // Khi thời gian đổi, kiểm tra lại giỏ trước khi cập nhật.
-    if (periodChanged && (req.session.selectedCars || []).length > 0) {
-      const synced = await service.syncCart(
-        req.session.selectedCars,
-        { start: filters.start, end: filters.end },
-        true,
-      );
-
-      req.session.selectedCars = synced.items;
-
-      if (synced.removed > 0) {
-        notice =
-          `${synced.removed} xe đã bị loại khỏi danh sách ` +
-          "vì không còn phù hợp với thời gian thuê mới.";
-      }
-      if (synced.priceChanged > 0) {
-        notice =
-          `${notice || ""} Đơn giá đã thay đổi. Vui lòng kiểm tra lại giỏ hàng.`.trim();
-      }
-    }
-
+    // Khoảng tìm kiếm chỉ áp dụng cho xe được chọn tiếp theo.
+    // Mỗi xe trong giỏ giữ riêng thời gian đã chọn trước đó.
     req.session.bookingPeriod = {
       start: filters.start,
       end: filters.end,
@@ -78,7 +52,7 @@ exports.search = async (req, res, next) => {
       filters,
       cars: result.cars,
       error: null,
-      notice,
+      notice: null,
       pagination: {
         page: result.page,
         totalPages: result.totalPages,
@@ -109,6 +83,7 @@ exports.select = async (req, res) => {
       "Mã xe không hợp lệ.",
       "Hãy tìm kiếm lại với khoảng thời gian hợp lệ.",
       "Xe không còn khả dụng trong khoảng thời gian này.",
+      "Xe đã có trong danh sách. Hãy xóa xe trước khi chọn lại thời gian thuê.",
     ];
     if (!safeMessages.includes(e.message))
       console.error("Car selection failed:", e);
@@ -123,10 +98,8 @@ exports.select = async (req, res) => {
 exports.cart = async (req, res, next) => {
   try {
     const selected = req.session.selectedCars || [];
-    const period = req.session.bookingPeriod;
-
     // Kiểm tra lại xe và cập nhật giá đang hiển thị.
-    const result = await service.syncCart(selected, period, true);
+    const result = await service.syncCart(selected, true);
 
     // Session và danh sách hiển thị phải thống nhất.
     req.session.selectedCars = result.items;

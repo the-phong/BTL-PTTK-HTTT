@@ -313,3 +313,62 @@ test(
     }
   },
 );
+
+test(
+  "MySQL: một phiếu lưu hai khoảng thuê độc lập",
+  { skip: !enabled },
+  async () => {
+    const f = await fixture();
+    const pool = getPool();
+    const [second] = await pool.execute(
+      "INSERT INTO tblXeOTo(MaXeHienThi,TenXe,BienSo,LoaiXe,SoCho,HangXe,NamSanXuat,DonGiaGio) VALUES(?,?,?,?,?,?,?,?)",
+      [
+        `${prefix}-DIFF`,
+        "Second car",
+        `${prefix}-DIFF`,
+        "SUV",
+        7,
+        "Test",
+        2024,
+        50000,
+      ],
+    );
+    try {
+      const result = await repo.confirm(f.customerId, [
+        {
+          id: f.carId,
+          start: "2090-01-01T08:00",
+          end: "2090-01-02T08:00",
+          quotedPrice: 50000,
+          hours: 24,
+        },
+        {
+          id: second.insertId,
+          start: "2090-01-01T08:00",
+          end: "2090-01-03T08:00",
+          quotedPrice: 50000,
+          hours: 48,
+        },
+      ]);
+      const [rows] = await pool.execute(
+        "SELECT MaXe,ThoiGianNhan,ThoiGianTra,SoGio,ThanhTien FROM tblChiTietPhieuDat WHERE MaPhieu=? ORDER BY MaXe",
+        [result.id],
+      );
+      assert.equal(rows.length, 2);
+      assert.deepEqual(
+        rows.map((row) => Number(row.SoGio)),
+        [24, 48],
+      );
+      assert.deepEqual(
+        rows.map((row) => Number(row.ThanhTien)),
+        [1200000, 2400000],
+      );
+      assert.equal(result.total, 3600000);
+    } finally {
+      await cleanup(f);
+      await pool.execute("DELETE FROM tblXeOTo WHERE MaXe=?", [
+        second.insertId,
+      ]);
+    }
+  },
+);
