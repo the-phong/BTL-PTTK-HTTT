@@ -1,0 +1,20 @@
+<%- include('../../../views/partials/header',{title}) %>
+<section class="welcome">
+  <span class="eyebrow">KHÔNG GIAN CỦA BẠN</span>
+  <h1>
+    Xin chào, <em><%= user.name %></em>
+  </h1>
+  <p>Hôm nay bạn muốn đi đâu?</p>
+  <div class="dashboard-cards">
+    <a href="/dat-xe/tim"
+      ><b>01 / TÌM XE</b>
+      <h2>Chọn xe cho<br />chuyến đi mới ↗</h2>
+      <span>Tìm xe phù hợp theo lịch trình</span></a
+    ><a href="/dat-xe/phieu-cua-toi"
+      ><b>02 / ĐẶT XE</b>
+      <h2>Những chuyến đi<br />của bạn ↗</h2>
+      <span>Xem lịch sử và chi tiết phiếu đặt</span></a
+    >
+  </div>
+</section>
+<%- include('../../../views/partials/footer') %>

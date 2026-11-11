@@ -1,0 +1,38 @@
+<%- include('../../../views/partials/header',{title}) %>
+<section class="auth-layout">
+  <div class="auth-aside">
+    <span class="eyebrow">CHÀO MỪNG TRỞ LẠI</span>
+    <h1>Mỗi cung đường<br />đều có <em>câu chuyện.</em></h1>
+    <p>Đăng nhập để tiếp tục hành trình của bạn.</p>
+    <div class="aside-car">🚘</div>
+  </div>
+  <div class="form-card">
+    <span class="eyebrow">TÀI KHOẢN CỦA BẠN</span>
+    <h2>Đăng nhập</h2>
+    <p class="muted">Nhập thông tin để quản lý chuyến đi.</p>
+    <% if(error){ %>
+    <div class="notice error"><%= error %></div>
+    <% } %>
+    <form method="post" action="/dang-nhap">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" /><label
+        >Email<input
+          type="email"
+          name="email"
+          required
+          autocomplete="email"
+          placeholder="ban@email.com" /></label
+      ><label
+        >Mật khẩu<input
+          type="password"
+          name="password"
+          required
+          autocomplete="current-password"
+          placeholder="Nhập mật khẩu" /></label
+      ><button class="button primary full">Đăng nhập <span>→</span></button>
+    </form>
+    <p class="form-bottom">
+      Chưa có tài khoản? <a href="/dang-ky">Đăng ký ngay</a>
+    </p>
+  </div>
+</section>
+<%- include('../../../views/partials/footer') %>

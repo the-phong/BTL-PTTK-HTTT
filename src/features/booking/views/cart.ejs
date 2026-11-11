@@ -1,0 +1,66 @@
+<%- include('../../../views/partials/header',{title}) %>
+<div class="section-head">
+  <div>
+    <span class="eyebrow">KIỂM TRA LỰA CHỌN</span>
+    <h1>Xe đã <em>chọn.</em></h1>
+    <p>Kiểm tra lịch thuê và chi phí trước khi xác nhận.</p>
+  </div>
+  <span class="step-pill">02 — XÁC NHẬN</span>
+</div>
+<% if(error){ %>
+<div class="notice error"><%= error %></div>
+<% } %><% if(!cars.length){ %>
+<div class="empty-state">
+  Bạn chưa chọn xe nào. <a href="/dat-xe/tim">Tìm xe ngay →</a>
+</div>
+<% } else { %>
+<div class="cart-list">
+  <% cars.forEach(c=>{ %>
+  <article class="cart-item">
+    <div class="cart-icon">🚙</div>
+    <div class="cart-main">
+      <h3><%= c.TenXe %></h3>
+      <span
+        ><%= c.MaXeHienThi %>
+        ·
+        <%= c.LoaiXe %>
+        ·
+        <%= c.SoCho %>
+        chỗ</span
+      >
+      <p>
+        Nhận: <%= c.start.replace('T',' ') %> &nbsp;→&nbsp; Trả: <%=
+        c.end.replace('T',' ') %>
+      </p>
+    </div>
+    <strong
+      ><%= (Number(c.DonGiaGio)*c.hours).toLocaleString('vi-VN') %>
+      đ</strong
+    >
+    <form method="post" action="/dat-xe/xoa">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" /><input
+        type="hidden"
+        name="carId"
+        value="<%= c.MaXe %>"
+      /><button class="remove">×</button>
+    </form>
+  </article>
+  <% }) %>
+</div>
+<div class="cart-total">
+  <span>Tổng chi phí dự kiến</span
+  ><strong
+    ><%=
+    cars.reduce((s,c)=>s+Number(c.DonGiaGio)*c.hours,0).toLocaleString('vi-VN')
+    %> <small>đ</small></strong
+  >
+  <form method="post" action="/dat-xe/xac-nhan">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" /><button
+      class="button primary"
+    >
+      Xác nhận đặt xe <span>→</span>
+    </button>
+  </form>
+  <p>Đơn giá được xác nhận lại tại thời điểm đặt.</p>
+</div>
+<% } %><%- include('../../../views/partials/footer') %>

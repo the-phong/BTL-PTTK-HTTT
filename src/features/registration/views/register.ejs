@@ -1,0 +1,82 @@
+<%- include('../../../views/partials/header',{title}) %>
+<section class="register-layout">
+  <div class="register-intro">
+    <span class="eyebrow">THÀNH VIÊN LĂN BÁNH</span>
+    <h1>Mở khóa<br /><em>những hành trình.</em></h1>
+    <p>Tạo tài khoản để tìm kiếm, chọn xe và quản lý lịch thuê của bạn.</p>
+    <div class="intro-mark">✳</div>
+  </div>
+  <div class="form-card wide">
+    <span class="eyebrow">BƯỚC 01 · THÔNG TIN CÁ NHÂN</span>
+    <h2>Tạo tài khoản</h2>
+    <p class="muted">Điền thông tin để bắt đầu.</p>
+    <% if(errors){ %>
+    <div class="notice error">
+      <ul>
+        <% errors.forEach(e=>{ %>
+        <li><%= e %></li>
+        <% }) %>
+      </ul>
+    </div>
+    <% } %>
+    <form method="post" action="/dang-ky">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+      <div class="form-grid">
+        <label
+          >Họ và tên<input
+            name="name"
+            required
+            minlength="2"
+            value="<%= form.name||'' %>"
+            placeholder="Nguyễn Thế Phong" /></label
+        ><label
+          >Ngày sinh<input
+            type="date"
+            name="birth"
+            required
+            value="<%= form.birth||'' %>" /></label
+        ><label
+          >Số điện thoại<input
+            name="phone"
+            required
+            value="<%= form.phone||'' %>"
+            placeholder="09xx xxx xxx" /></label
+        ><label
+          >Email<input
+            type="email"
+            name="email"
+            required
+            value="<%= form.email||'' %>"
+            placeholder="ban@email.com" /></label
+        ><label class="span-two"
+          >Địa chỉ<input
+            name="address"
+            required
+            value="<%= form.address||'' %>"
+            placeholder="Số nhà, đường, quận/huyện, tỉnh/thành" /></label
+        ><label
+          >Mật khẩu<input
+            type="password"
+            name="password"
+            required
+            minlength="8"
+            autocomplete="new-password"
+            placeholder="Tối thiểu 8 ký tự" /></label
+        ><label
+          >Xác nhận mật khẩu<input
+            type="password"
+            name="confirm"
+            required
+            minlength="8"
+            autocomplete="new-password"
+            placeholder="Nhập lại mật khẩu"
+        /></label>
+      </div>
+      <button class="button primary full">Tạo tài khoản <span>→</span></button>
+    </form>
+    <p class="form-bottom">
+      Đã là thành viên? <a href="/dang-nhap">Đăng nhập</a>
+    </p>
+  </div>
+</section>
+<%- include('../../../views/partials/footer') %>

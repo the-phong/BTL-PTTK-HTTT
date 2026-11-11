@@ -1,0 +1,44 @@
+<%- include('../../../views/partials/header',{title}) %>
+<div class="section-head">
+  <div>
+    <span class="eyebrow">HÀNH TRÌNH CỦA BẠN</span>
+    <h1>Phiếu đặt <em>xe.</em></h1>
+    <p>Lịch sử những chuyến đi bạn đã lên kế hoạch.</p>
+  </div>
+  <a class="button primary" href="/dat-xe/tim">Đặt xe mới →</a>
+</div>
+<% if(!bookings.length){ %>
+<div class="empty-state">
+  Bạn chưa có phiếu đặt nào. <a href="/dat-xe/tim">Bắt đầu tìm xe →</a>
+</div>
+<% } else { %>
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Mã phiếu</th>
+        <th>Ngày đặt</th>
+        <th>Trạng thái</th>
+        <th>Tổng tiền</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% bookings.forEach(b=>{ %>
+      <tr>
+        <td>
+          <strong><%= b.MaPhieuHienThi %></strong>
+        </td>
+        <td><%= new Date(b.ThoiGianDat).toLocaleString('vi-VN') %></td>
+        <td><span class="status"><%= b.TrangThai %></span></td>
+        <td>
+          <%= Number(b.TongTien).toLocaleString('vi-VN') %>
+          đ
+        </td>
+        <td><a href="/dat-xe/phieu/<%= b.MaPhieu %>">Chi tiết →</a></td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } %><%- include('../../../views/partials/footer') %>

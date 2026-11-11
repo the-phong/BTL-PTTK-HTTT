@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title><!= title !> · Lăn Bánh</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/"
+        ><span class="brand-icon">L</span
+        ><span>LĂN BÁNH<small>CAR RENTAL</small></span></a
+      >
+      <nav>
+        <a href="/dat-xe/tim">Tìm xe</a><% if(user){ %><a
+          href="/dat-xe/phieu-cua-toi"
+          >Phiếu đặt</a
+        ><a href="/dat-xe/gio-hang">Đã chọn</a
+        ><span class="nav-user"
+          >Xin chào, <%= user.name.split(' ').slice(-1)[0] %></span
+        >
+        <form action="/dang-xuat" method="post" class="inline">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>" /><button
+            class="link-button"
+          >
+            Đăng xuất
+          </button>
+        </form>
+        <% }else{ %><a href="/dang-nhap">Đăng nhập</a
+        ><a class="nav-cta" href="/dang-ky">Tạo tài khoản <span>↗</span></a
+        ><% } %>
+      </nav>
+    </header>
+    <main class="page">
+      <% if(flashMessage){ %>
+      <div class="notice success"><%= flashMessage %></div>
+      <% } %>
+    </main>
+  </body>
+</html>

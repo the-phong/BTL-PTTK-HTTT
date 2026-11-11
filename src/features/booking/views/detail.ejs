@@ -1,0 +1,58 @@
+<%- include('../../../views/partials/header',{title}) %>
+<div class="section-head">
+  <div>
+    <span class="eyebrow">ĐẶT XE THÀNH CÔNG</span>
+    <h1>
+      Phiếu <em><%= booking.MaPhieuHienThi %>.</em>
+    </h1>
+    <p>Chi tiết xe và lịch thuê trong phiếu đặt của bạn.</p>
+  </div>
+  <span class="status"><%= booking.TrangThai %></span>
+</div>
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Xe</th>
+        <th>Biển số</th>
+        <th>Nhận xe</th>
+        <th>Trả xe</th>
+        <th>Đơn giá / giờ</th>
+        <th>Thành tiền</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% booking.items.forEach(i=>{ %>
+      <tr>
+        <td>
+          <strong><%= i.TenXe %></strong>
+        </td>
+        <td><%= i.BienSo %></td>
+        <td><%= new Date(i.ThoiGianNhan).toLocaleString('vi-VN') %></td>
+        <td><%= new Date(i.ThoiGianTra).toLocaleString('vi-VN') %></td>
+        <td>
+          <%= Number(i.DonGiaGio).toLocaleString('vi-VN') %>
+          đ
+        </td>
+        <td>
+          <%= Number(i.ThanhTien).toLocaleString('vi-VN') %>
+          đ
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="5">Tổng cộng</td>
+        <td>
+          <strong
+            ><%= Number(booking.TongTien).toLocaleString('vi-VN') %>
+            đ</strong
+          >
+        </td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+<p><a href="/dat-xe/phieu-cua-toi">← Quay lại phiếu đặt</a></p>
+<%- include('../../../views/partials/footer') %>
